@@ -94,7 +94,7 @@ class SS_License {
 		fclose($fp);
 
 		// check that this license is valid. $extra is just a checksome integer.
-		if ( ! is_integer($extra))
+		if ( ! is_numeric($extra))
 			return NULL;
 
 		// calculate our alias checksum
@@ -102,11 +102,6 @@ class SS_License {
 		for ($i = 0; $i < strlen($alias); $i++)
 		{
 			$checksum += ord($alias[$i]);
-		}
-		foreach ($alias as $letter)
-		{
-			$checksum += int($letter);
-//			echo "letter is: $letter<br>";
 		}
 
 		if ($checksum == $extra)
@@ -153,14 +148,7 @@ class SS_License {
 		for ($i = 0; $i < strlen($alias); $i++)
 		{
 			$checksum += ord($alias[$i]);
-			echo "letter is: {$alias[$i]}<br>";
 		}
-//		foreach ($alias as $letter)
-//		{
-//			$checksum += int($letter);
-//			echo "letter is: $letter<br>";
-//		}
-		echo "checksum is: $checksum<br>";
 
 		$fp = fopen(SS_LICENSE_FILE, 'w');
 		if ( ! $fp)
@@ -177,22 +165,24 @@ class SS_License {
 	 */
 	public function active()
 	{
-		if ( ! $this->alias())
-		{
+		// if there is no alias present, this software copy is not active
+		$alias = $this->alias();
+		if ( ! $this->valid_code($alias))
 			return false;
-		}
 
-//		$this->call = 'auth';
 		$this->params['mach'] = $this->machine_id();
-		$this->params['code'] = $this->alias();
-		if ($result = $this->api('auth'))
-		{
-			echo "result = $result<br>";
-		}
-		else
-		{
-			var_dump($result);
-		}
+		$this->params['code'] = $alias;
+
+		return ($this->call_api('auth') == '1');
+	}
+
+	/**
+	 * a quick check to determine if the software had been activated.
+	 */
+	public function locally_active()
+	{
+		$alias = $this->alias();
+		return $this->valid_code($alias);
 	}
 
 	/**
@@ -202,26 +192,14 @@ class SS_License {
 	 */
 	public function activate($code)
 	{
-		echo "inside activate<br>";
-
-//		echo "result from valid_code($code): ";
-//		var_dump($this->valid_code($code));
-//		echo '<br>';
 		if ( ! $this->valid_code($code))
-		{
-			echo "wtf? returning false??<br>";
 			return false;
-		}
-
-		echo "so far, code is valid<br>";
 
 		$this->params['code'] = $code;
 		$this->params['mach'] = $this->machine_id();
 		$alias = $this->call_api('activate');
 		if ($this->valid_code($alias))
 		{
-			echo "i gunna tell yew what it is!<br>";
-			echo "result = '$alias'<br>";
 			// extract and save the alias to file
 			$this->save_alias($alias);
 			return true;

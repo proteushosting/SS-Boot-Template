@@ -6,9 +6,9 @@
  * This module is meant for you to include, or copy-paste, into your company's distributed PHP application, 
  * plug-in, module, etc. Upon deploying your software master to paying customer, it is strongly recommended
  * that you obfuscate or compile all PHP code. For integration with GNU licensed frameworks, such as WordPress,
- * the GNU licensed code should not be obfuscated; however, this licensing module and your application's or 
- * plug-in's code absolutely should be...unless you want your users to easily remove Serial Sense's network
- * licensing enforcement.
+ * the GNU licensed code should not be encrypted; however, this licensing module and your application's or 
+ * plug-in's core logic should absolutely be obfuscated and encrypted...unless you want your customers with 
+ * PHP experience to bypass Serial Sense's network licensing enforcement.
  *
  * For more information, visit our resource hub at:
  * http://www.serialsense.com/blog
@@ -25,7 +25,7 @@ $license = new SS_License;
 /**
  * POST PROCESSOR
  *
- * Process post information
+ * @return  bool  was a display page rendered?
  */
 function ProcessPost()
 {
@@ -75,16 +75,29 @@ function ProcessPost()
  * Main Application:
  *
  */
-?>
 
-<html>
-<body>
+/**
+ * $license->active() will call the Serial Sense API to check if this machine is active. For a quick active check,  
+ * locally_active() will check local variables to determine if this app is authentic. This is much less secure; 
+ * however, it proves very useful with a less strict licensing enforcement system.
+ */
+//if ($license->locally_active()):
+if ($license->active()): ?>
 
-<?php if ($license->active()): ?>
+	<html>
+	<body>
 
 	<h1>Running Application...</h1>
 
+	<p class="light">If needed, you can also <a href="?action=deactivate">Deactivate</a> this machine.</p>
+
+	</body>
+	</html>
+
 <?php else: ?>
+
+	<html>
+	<body>
 
 	<h1>Activate Your Copy Today!</h1>
 	
@@ -93,24 +106,20 @@ function ProcessPost()
 	<?php ProcessPost(); ?>
 	
 	<form method="post">
-	<h2>
-		<strong>License Activation Code: </strong>
-		<input type="text" name="activation_code" maxlength="15"> 
-		<input type="submit" name="activate" value="Activate">
-	</h2>
 
-	<p><font color="#777">
-		Forgot your license code? No problem, just input your email below and your activation code will be 
-		re-emailed to you.
-			<br><br>
-		Your Email: 
-		<input type="text" name="email"> 
-		<input type="submit" name="forgot" value="Re-send Code">
-	</font></p>
+		<p><strong>License Activation Code:</strong> <input type="text" name="activation_code" maxlength="15"> <input type="submit" name="activate" value="Activate"></p>
+
+		<p class="light">
+			Forgot your license code? No problem, just input your email below and your activation code will be re-emailed to you.
+		</p>
+			<br>
+		<p class="light">
+			Your Email: 
+			<input type="text" name="email"> 
+			<input type="submit" name="forgot" value="Re-send Code">
+		</p>
 
 	</form>
-
+	</body>
+	</html>
 <?php endif; ?>
-
-</body>
-</html>
