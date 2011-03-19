@@ -11,9 +11,15 @@
 <hr>
 <br>
 
-<form method="post">
+<form method="post" action="ss_boot.php">
 
 	<blockquote>
+		<? if (isset($_POST['error'])): ?>
+			<p>
+				<span class="error-title"><?=$_POST['error']['title']?>:</span> 
+				<span class="error-message"><?=$_POST['error']['message']?></span>
+			</p>
+		<? endif; ?>
 		<p>
 			<strong>License Activation Code:</strong> 
 			<input type="text" name="activation_code" maxlength="15"> 

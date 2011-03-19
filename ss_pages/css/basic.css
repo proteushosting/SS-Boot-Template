@@ -28,3 +28,6 @@ table
 {
 	color: #777;
 }
+
+.error-title { font-weight: bold; }
+.error-title, .error-message { color: #d00; }

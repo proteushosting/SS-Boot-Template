@@ -28,6 +28,23 @@ define('SS_BOOT', '');
 $license = new SS_License;
 
 /**
+ * Process GET actions
+ */
+if ($_GET)
+{
+	if (isset($_GET['action']))
+	{
+		$action = $_GET['action'];
+
+		// deactivate local copy
+		if ($action == 'deactivate')
+		{
+			$license->deactivate();
+		}
+	}
+}
+
+/**
  * POST PROCESSOR
  * The meat of this template's form processing.
  *
@@ -42,35 +59,23 @@ function process_post()
 		// did user press the 'activate' button?
 		if (isset($_POST['activate']))
 		{
-			echo "about to try activation<br>";
-			print_r($_POST);
-			echo '<br>';
 			if ( ! ($alias = $license->activate($_POST['activation_code'])))
 			{
-				?>
-				<table border="1" cellpadding="25" cellspacing="0">
-				<tr><td>
-					<font color="#d00"><strong>Invalid Activation Code!</strong></font>
-						<br>
-					Do not forget: you must include all hyphens in your activation code.
-				</td></td>
-				</table>
-				<?php
-				var_dump($alias);
-				echo '<br>';
-			}
-			else
-			{
-				echo "welp, looks like it worked :)<br>";
+				// set a POST error to be included in the page display
+				$_POST['error'] = array(
+					'title'   => 'Invalid Activation Code',
+					'message' => 'Please include all hyphens in your activation code.'
+					);
 			}
 			/**
-			 * However, if activation does not fail, then SS_License::active() (below) will trigger this 
-			 * web application as active :D
+			 * However, if activation does not fail, then SS_License active() or locally_active() (below) will trigger 
+			 * this web application as active :D
 			 */			
 		}
 		else if (isset($_POST['forgot']))
 		{
-			echo "you forgot your code??<br>";
+			require_once('ss_pages/resent_code.php');
+			exit;
 		}
 	}
 }

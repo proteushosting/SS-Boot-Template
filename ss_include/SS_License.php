@@ -34,7 +34,7 @@ class SS_License {
 		{
 			throw new Exception("Invalid license response header. Check that your SS_API_LOCATION is "
 				. "set to the proper server address.");
-			return NULL;
+			return null;
 		}
 
 		// return everything after "<license>\n"
@@ -80,34 +80,35 @@ class SS_License {
 	 * wish to store the license alias differently--database, different file location, or whatever you can 
 	 * dream up.
 	 *
-	 * @return  string  the license alias stored locally. a NULL string is returned if the alias is not
+	 * @return  string  the license alias stored locally. a null string is returned if the alias is not
 	 *                  available.
 	 */
 	private function alias()
 	{
 		$fp = fopen(SS_LICENSE_FILE, 'r');
 		if ( ! $fp)
-			return NULL;
+			return null;
 
 		$alias = trim(fgets($fp));
-		$extra = trim(fgets($fp));
 		fclose($fp);
 
 		// check that this license is valid. $extra is just a checksome integer.
-		if ( ! is_numeric($extra))
-			return NULL;
+		// if ( ! is_numeric($extra))
+		// 	return null;
 
 		// calculate our alias checksum
-		$checksum = 0;
-		for ($i = 0; $i < strlen($alias); $i++)
-		{
-			$checksum += ord($alias[$i]);
-		}
+		// $checksum = 0;
+		// for ($i = 0; $i < strlen($alias); $i++)
+		// {
+		// 	$checksum += ord($alias[$i]);
+		// }
 
-		if ($checksum == $extra)
-			return $alias;
-		else
-			return NULL;
+		// if ($checksum == $extra)
+		// 	return $alias;
+		// else
+		// 	return null;
+
+		return $this->decrypt($alias);
 	}
 
 	/**
@@ -136,28 +137,57 @@ class SS_License {
 	 */
 	public function save_alias($alias)
 	{
+		// if alias is not valid, then create a blank license entry
 		if ( ! $this->valid_code($alias))
-			return false;
-
-		/**
-		 * generate checksum. this is un-needed; however, it could also serve to let the licensing module know
-		 * if someone is attempting to alter the stored license alias. at most, this extra check sum helps
-		 * hackers waste their time trying to get an alias to work for product authentication purposes :)
-		 */
-		$checksum = 0;
-		for ($i = 0; $i < strlen($alias); $i++)
 		{
-			$checksum += ord($alias[$i]);
+			$fp = fopen(SS_LICENSE_FILE, 'w');
+			if ( ! $fp)
+			{
+				throw new Exception('Unable to create or write to license file: "'.SS_LICENSE_FILE.'"');
+				return false;
+			}
+
+			fwrite($fp, "\n");
+			fclose($fp);
+			return false;
 		}
+
+		$alias = $this->encrypt($alias);
 
 		$fp = fopen(SS_LICENSE_FILE, 'w');
 		if ( ! $fp)
 			return false;
 
 		fwrite($fp, $alias."\n");
-		fwrite($fp, $checksum."\n");
 		fclose($fp);
 		return true;
+	}
+
+	/**
+	 * PRIVATE FUNCTION. Do not allow outside developers (hackers) to mess with stored encryption strings :)
+	 *
+	 * These functions are mainly used to encrypt and decrypt the alias before writing to file. It is very important 
+	 * that you do not use the same encryption/decryption methods as used here!!!
+	 *
+	 * In fact, considering this licensing template is available publicly, it is better that you completely change how you save the 
+	 * user's alias in general. While end users are not at risk of someone else activating their licensed product, you--the developer--
+	 * risk this alias key being used by another unauthorized user ONLY IF you are not using strict booting terms.
+	 *
+	 * By "strict booting terms", I mean using the SS_License class's method active() to determine if the copy is active. A less strict--
+	 * and less secure--method at boot time is to check the class method locally_active(). 
+	 *
+	 * This may be considered un-needed; however, it could also serve to let the licensing module know
+	 * if someone is attempting to alter the stored license alias. at most, this extra check sum helps
+	 * hackers waste their time trying to get an alias to work for product authentication purposes :)
+	 */
+	private function encrypt($alias)
+	{
+		return $alias;
+	}
+
+	private function decrypt($alias)
+	{
+		return $alias;
 	}
 
 	/**
@@ -206,6 +236,25 @@ class SS_License {
 		}
 		else
 			return false;
+	}
+
+	/**
+	 * Deactivates local copy.
+	 * @return  bool  whether deactivation was successful or not.
+	 */
+	public function deactivate()
+	{
+		$this->params['code'] = $this->alias();
+		$this->params['mach'] = $this->machine_id();
+		$result = $this->call_api('deactivate');
+
+		// if deactivation was successful then also deactive this copy locally.
+		if ($result == 'S')
+		{
+			$this->save_alias(null);
+		}
+
+		return $result == 'S';
 	}
 
 }	// end class SS_License
