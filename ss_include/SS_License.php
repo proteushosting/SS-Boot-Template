@@ -89,8 +89,8 @@ class SS_License {
 		if ( ! $fp)
 			return NULL;
 
-		$alias = fgets($fp);
-		$extra = fgets($fp);
+		$alias = trim(fgets($fp));
+		$extra = trim(fgets($fp));
 		fclose($fp);
 
 		// check that this license is valid. $extra is just a checksome integer.
