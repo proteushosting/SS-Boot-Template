@@ -49,7 +49,7 @@ class SS_License {
 	 *       using Serial Sense for a desktop application, in which case you are probably only looking at this
 	 *       code for the sake of porting to another programming language.
 	 */
-	private function machine_id()
+	private function machine_id($max_size = 0)
 	{
 		$linux_input  = "ifconfig | grep -i hwaddr | awk '{print $1$5}' | sed 's/://g' | xargs echo | "
 		              . "sed 's/ //g'";
@@ -89,24 +89,9 @@ class SS_License {
 		if ( ! $fp)
 			return null;
 
-		$alias = trim(fgets($fp));
+		// "64" should be a defined variable (from config) such as SS_ENC_ALIAS_MAX_BYTE_SIZE
+		$alias = fread($fp, 64);
 		fclose($fp);
-
-		// check that this license is valid. $extra is just a checksome integer.
-		// if ( ! is_numeric($extra))
-		// 	return null;
-
-		// calculate our alias checksum
-		// $checksum = 0;
-		// for ($i = 0; $i < strlen($alias); $i++)
-		// {
-		// 	$checksum += ord($alias[$i]);
-		// }
-
-		// if ($checksum == $extra)
-		// 	return $alias;
-		// else
-		// 	return null;
 
 		return $this->decrypt($alias);
 	}
@@ -158,7 +143,7 @@ class SS_License {
 		if ( ! $fp)
 			return false;
 
-		fwrite($fp, $alias."\n");
+		fwrite($fp, $alias);
 		fclose($fp);
 		return true;
 	}
@@ -182,12 +167,62 @@ class SS_License {
 	 */
 	private function encrypt($alias)
 	{
-		return $alias;
+		// $iv not necessary with RIJNDAEL_256
+//		$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
+//		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+
+		// encryption key can only be 32 bytes -- so crunch it down to size!
+		$key = $this->crunch($this->machine_id());
+		return mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $alias, MCRYPT_MODE_ECB);
 	}
 
 	private function decrypt($alias)
 	{
-		return $alias;
+		// $iv not necessary with RIJNDAEL_256
+//		$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
+//		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+
+		// encryption key can only be 32 bytes -- so crunch it down to size!
+		$key = $this->crunch($this->machine_id());
+		$result = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, $alias, MCRYPT_MODE_ECB);
+
+		// remove only the null character padding from the right
+		return rtrim($result, "\0");
+	}
+
+	/**
+	 * "Crunches" a string to half of its size. This is intended for ASCII strings that will be used as 
+	 * an encryption key with this class's encrypt and decrypt functions.
+	 *
+	 * @param   integer  size to crunch the string to. if the string's length is over $size * 2, the remaining
+	 *                   characters will be truncated.
+	 * @return  string   the "crunched" string.
+	 */
+	private function crunch($str, $max_size = 32)
+	{
+		$crunch_str = array();
+
+		/**
+		 * truncate original string to be a maximum of crunch string's $max_size * 2
+		 * "length" is the planned size of the crunched string.
+		 */
+		if (strlen($str) > $max_size * 2)
+		{
+			$str = substr($str, 0, $max_size * 2);
+			$length = $max_size;
+		}
+		else
+		{
+			$length = (int)(strlen($str) / 2 + 0.5);
+		}
+		for ($i = 0; $i < $length; $i++)
+		{
+			// fetch the first (a) and second (b) character pair ascii values
+			$a = isset($str[$i * 2])     ? ord($str[$i * 2])     : 0;
+			$b = isset($str[$i * 2 + 1]) ? ord($str[$i * 2 + 1]) : 0;
+			$crunch_str[$i] = chr($a + $b);
+		}
+		return implode('', $crunch_str);
 	}
 
 	/**
