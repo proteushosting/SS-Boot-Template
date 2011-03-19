@@ -18,16 +18,22 @@ require_once('ss_include/config.php');
 require_once('ss_include/SS_License.php');
 
 /**
+ * This defined variable will allow any pages under the ss_pages directory to be read.
+ */
+define('SS_BOOT', '');
+
+/**
  * Obviously: Instance of our license
  */
 $license = new SS_License;
 
 /**
  * POST PROCESSOR
+ * The meat of this template's form processing.
  *
  * @return  bool  was a display page rendered?
  */
-function ProcessPost()
+function process_post()
 {
 	global $license;
 
@@ -76,6 +82,8 @@ function ProcessPost()
  *
  */
 
+process_post();
+
 /**
  * $license->active() will call the Serial Sense API to check if this machine is active. For a quick active check,  
  * locally_active() will check local variables to determine if this app is authentic. This is much less secure; 
@@ -84,42 +92,10 @@ function ProcessPost()
 //if ($license->locally_active()):
 if ($license->active()): ?>
 
-	<html>
-	<body>
-
-	<h1>Running Application...</h1>
-
-	<p class="light">If needed, you can also <a href="?action=deactivate">Deactivate</a> this machine.</p>
-
-	</body>
-	</html>
+	<? require_once('ss_pages/app_status.php'); ?>
 
 <?php else: ?>
 
-	<html>
-	<body>
-
-	<h1>Activate Your Copy Today!</h1>
+	<? require_once('ss_pages/ask_activation.php'); ?>
 	
-	<hr>
-
-	<?php ProcessPost(); ?>
-	
-	<form method="post">
-
-		<p><strong>License Activation Code:</strong> <input type="text" name="activation_code" maxlength="15"> <input type="submit" name="activate" value="Activate"></p>
-
-		<p class="light">
-			Forgot your license code? No problem, just input your email below and your activation code will be re-emailed to you.
-		</p>
-			<br>
-		<p class="light">
-			Your Email: 
-			<input type="text" name="email"> 
-			<input type="submit" name="forgot" value="Re-send Code">
-		</p>
-
-	</form>
-	</body>
-	</html>
 <?php endif; ?>

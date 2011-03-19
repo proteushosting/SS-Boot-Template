@@ -1,0 +1,30 @@
+#main
+{
+	background-color:#000000;
+	font-family: arial, sans-serif;
+	text-decoration:none;	
+	text-align:center;
+	color:#ffffff;
+}
+
+#content
+{
+	background-color:#000000;
+	font-family:arial, sans-serif;
+	color:#e00000;
+	text-decoration:none;
+}
+
+table
+{
+	border: 5px solid #e00000;
+	border-color:#000000;
+	padding: 10px;
+	margin-left:25%;
+	margin-right:25%;
+}
+
+.light
+{
+	color: #777;
+}

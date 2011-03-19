@@ -20,6 +20,11 @@ error_reporting(E_ALL | E_STRICT);
 define('SS_LICENSE_FILE', 'li.sense');
 
 /**
+ * This is the URL for your software's license purchase page. 
+ */
+define('SS_PURCHASE_LICENSE', 'http://www.your-website.com/purchase-software-license-page');
+
+/**
  * API Configuration
  *
  * If you have a Serial Sense account with access to our premium, SSL secured servers, change the protocol and
