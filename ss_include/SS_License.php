@@ -38,7 +38,6 @@ class SS_License {
 		}
 
 		// return everything after "<license>\n"
-//		$result = trim(substr($result, 10));
 		return trim(substr($result, 10));
 	}
 
@@ -68,8 +67,10 @@ class SS_License {
 		 * in your unix shell or Mac OS X terminal.
 		 */
 		$server_input = "uname -mnrsp";
+		// if you wish to exclude the revision flag (-r) then uncomment the code below:
+		$server_input = "uname -mnsp";
 
-		// NOTE: this does not work with shell_exec for some reason >\
+		// NOTE: this is not working with shell_exec for some reason >\
 //		$apple_input  = "system_profiler | grep -i \"Serial Number (system):\" | awk '{print $4}'";
 
 		return shell_exec($server_input);
@@ -89,8 +90,7 @@ class SS_License {
 		if ( ! $fp)
 			return null;
 
-		// "64" should be a defined variable (from config) such as SS_ENC_ALIAS_MAX_BYTE_SIZE
-		$alias = fread($fp, 64);
+		$alias = fread($fp, SS_LICENSE_MAXSIZE);
 		fclose($fp);
 
 		return $this->decrypt($alias);
@@ -120,7 +120,7 @@ class SS_License {
 	 * @param   string  the license code alias to remember
 	 * @return  bool    was this function able to save the alias?
 	 */
-	public function save_alias($alias)
+	private function save_alias($alias)
 	{
 		// if alias is not valid, then create a blank license entry
 		if ( ! $this->valid_code($alias))
@@ -171,7 +171,7 @@ class SS_License {
 //		$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 //		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
 
-		// encryption key can only be 32 bytes -- so crunch it down to size!
+		// encryption key can only be 32 bytes (256-bits) -- so crunch it down to size!
 		$key = $this->crunch($this->machine_id());
 		return mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $alias, MCRYPT_MODE_ECB);
 	}
@@ -182,7 +182,7 @@ class SS_License {
 //		$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 //		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
 
-		// encryption key can only be 32 bytes -- so crunch it down to size!
+		// encryption key can only be 32 bytes (256-bits) -- so crunch it down to size!
 		$key = $this->crunch($this->machine_id());
 		$result = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, $alias, MCRYPT_MODE_ECB);
 
@@ -194,8 +194,8 @@ class SS_License {
 	 * "Crunches" a string to half of its size. This is intended for ASCII strings that will be used as 
 	 * an encryption key with this class's encrypt and decrypt functions.
 	 *
-	 * @param   integer  size to crunch the string to. if the string's length is over $size * 2, the remaining
-	 *                   characters will be truncated.
+	 * @param   integer  maximum allowed size of the crunched string. if the string's length is over $size * 2, 
+	 *                   the remaining characters will be truncated.
 	 * @return  string   the "crunched" string.
 	 */
 	private function crunch($str, $max_size = 32)

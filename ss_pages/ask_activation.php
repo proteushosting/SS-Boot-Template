@@ -16,8 +16,8 @@
 	<blockquote>
 		<? if (isset($_POST['error'])): ?>
 			<p>
-				<span class="error-title"><?=$_POST['error']['title']?>:</span> 
-				<span class="error-message"><?=$_POST['error']['message']?></span>
+				<span class="error-title"><?php echo $_POST['error']['title']; ?>:</span> 
+				<span class="error-message"><?php echo $_POST['error']['message']; ?></span>
 			</p>
 		<? endif; ?>
 		<p>
@@ -35,6 +35,9 @@
 			Your Email: 
 			<input type="text" name="email"> 
 			<input type="submit" name="forgot" value="Re-send Code">
+		</p>
+		<p class="light">
+			Need to purchase a license? <a href="<?php echo SS_PURCHASE_LICENSE; ?>" target="_blank">Click Here</a>
 		</p>
 	</blockquote>
 

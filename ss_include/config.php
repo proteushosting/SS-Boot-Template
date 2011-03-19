@@ -20,6 +20,16 @@ error_reporting(E_ALL | E_STRICT);
 define('SS_LICENSE_FILE', 'li.sense');
 
 /**
+ * The maximum size of the information to write to the license file. This value reflects the byte size and can
+ * be set as high of a value as PHP supports. The minimum size of this file should be at least the maximum byte
+ * size of the encrypted alias.
+ *
+ * NOTES:
+ *    - for more information on the encrypted, saved alias: look at SS_License class method save_alias()
+ */
+define('SS_LICENSE_MAXSIZE', 32);
+
+/**
  * This is the URL for your software's license purchase page. 
  */
 define('SS_PURCHASE_LICENSE', 'http://www.your-website.com/purchase-software-license-page');
